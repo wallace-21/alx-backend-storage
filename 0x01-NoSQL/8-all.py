@@ -12,6 +12,6 @@ def list_all(mongo_collection):
         otherwise an empty list.
     """
     action = mongo_collection.find({})
-    if len(action) == 0:
+    if action.count() == 0:
         return []
     return action
