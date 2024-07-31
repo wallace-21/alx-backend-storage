@@ -1,2 +1,0 @@
-// Listing all docs with a specific prefix
-db.school.find({"name": /^Holberton/})
