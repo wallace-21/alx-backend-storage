@@ -69,14 +69,15 @@ def replay(fn: Callable) -> None:
             fxn_output,
         ))
 
+
 class Cache():
+    """Class that handles caches"""
     def __init__(self):
         """ tore an instance of the Redis client as a
         private variable named _redis (using redis.Redis())
         and flush the instance using flushdb"""
         self._redis = redis.Redis()
         self._redis.flushdb()
-
 
     @call_history
     @count_calls
@@ -87,9 +88,12 @@ class Cache():
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Callable = None) -> Union[str, bytes, int, None]:
+    def get(self, key: str, fn: Callable = None) -> Union[str,
+                                                          bytes, int, None]:
         """Retrieve data from Redis using the specified key.
-        If fn is provided, use it to convert the data back to the desired format."""
+        If fn is provided, use it to convert the data back
+        to the desired format."""
+
         data = self._redis.get(key)
         if data is None:
             return None
