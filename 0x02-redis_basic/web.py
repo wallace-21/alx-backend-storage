@@ -2,35 +2,37 @@
 """
     web cache and tracker
 """
-import requests
+
 import redis
+import requests
 from functools import wraps
+from typing import Callable
 
-store = redis.Redis()
+redis_store = redis.Redis()
 
 
-def count_url_access(method):
-    """ Decorator counting how many times
-    a URL is accessed """
-    @wraps(method)
-    def wrapper(url):
-        cached_key = "cached:" + url
-        cached_data = store.get(cached_key)
-        if cached_data:
-            return cached_data.decode("utf-8")
+def data_cacher(func: Callable[[str], str]) -> Callable[[str], str]:
+    """A decorator that caches data and tracks the number of accesses."""
 
-        count_key = "count:" + url
-        html = method(url)
+    @wraps(func)
+    def wrapper(url: str) -> str:
+        """The wrapper function for caching the output."""
+        if not redis_store.exists(f"count:{url}"):
+            redis_store.set(f"count:{url}", 0)
+        redis_store.incr(f"count:{url}")
 
-        store.incr(count_key)
-        store.set(cached_key, html)
-        store.expire(cached_key, 10)
-        return html
+        result = redis_store.get(f"result:{url}")
+        if result is not None:
+            return result.decode("utf-8")
+
+        result = func(url)
+        redis_store.setex(f"result:{url}", 10, result)
+        return result
+
     return wrapper
 
 
-@count_url_access
+@data_cacher
 def get_page(url: str) -> str:
-    """ Returns HTML content of a url """
-    res = requests.get(url)
-    return res.text
+    """Fetch the content of a URL."""
+    return requests.get(url).text
